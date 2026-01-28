@@ -1,0 +1,208 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// model User {
+//   id    Int     @id @default(autoincrement())
+//   email String  @unique
+//   name  String?
+// }
+
+enum UserStatus {
+  ACTIVE // Has Clerk account
+  PENDING // Invited but not signed up
+}
+
+model User {
+  id        String     @id @default(cuid())
+  clerkId   String?    @unique // Nullable - pending users don't have this
+  email     String     @unique
+  name      String?
+  status    UserStatus @default(PENDING)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  personalExpenses PersonalExpense[]
+  income           Income[]
+  groupMemberships GroupMember[]
+  groupsCreated    Group[]           @relation("GroupCreator")
+  invitesSent      GroupInvite[]     @relation("InviteSender")
+  invitesReceived  GroupInvite[]     @relation("InviteReceiver")
+}
+
+model PersonalExpense {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Float
+  category    String
+  description String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([category])
+}
+
+model Income {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Float
+  source      String // "salary", "freelance", "investment", etc.
+  description String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+}
+
+model GroupExpense {
+  id             String        @id @default(cuid())
+  groupId        String
+  amount         Float
+  category       String
+  description    String?
+  paidByMemberId String // WHO PAID
+  date           DateTime      @default(now())
+  status         ExpenseStatus @default(ACTIVE)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  group  Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  paidBy GroupMember    @relation("ExpensePayer", fields: [paidByMemberId], references: [id])
+  splits ExpenseSplit[]
+
+  @@index([groupId, date])
+  @@index([category])
+  @@index([paidByMemberId])
+}
+
+enum ExpenseStatus {
+  ACTIVE
+  DELETED
+}
+
+model Group {
+  id          String   @id @default(cuid())
+  clerkOrgId  String?  @unique // Link to Clerk organization
+  name        String
+  description String?
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy     User              @relation("GroupCreator", fields: [createdById], references: [id])
+  members       GroupMember[]
+  groupExpenses GroupExpense[]
+  settlements   GroupSettlement[]
+  activityLog   ActivityLog[]
+  invites       GroupInvite[]
+}
+
+enum MemberStatus {
+  ACTIVE // Full member
+  PENDING // Invited but not accepted
+}
+
+model GroupMember {
+  id       String       @id @default(cuid())
+  groupId  String
+  userId   String
+  role     String       @default("member") // "admin" | "member"
+  status   MemberStatus @default(PENDING)
+  joinedAt DateTime     @default(now())
+
+  group           Group             @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  splits          ExpenseSplit[]
+  expensesPaid    GroupExpense[]    @relation("ExpensePayer")
+  settlementsFrom GroupSettlement[] @relation("SettlementFrom")
+  settlementsTo   GroupSettlement[] @relation("SettlementTo")
+
+  @@unique([groupId, userId])
+}
+
+enum InviteStatus {
+  INVITED
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+model GroupInvite {
+  id          String       @id @default(cuid())
+  groupId     String
+  email       String
+  userId      String? // Nullable - may not have user record yet
+  token       String       @unique @default(cuid())
+  status      InviteStatus @default(INVITED)
+  role        String       @default("member")
+  invitedById String
+  expiresAt   DateTime
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  group     Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  invitedBy User  @relation("InviteSender", fields: [invitedById], references: [id])
+  user      User? @relation("InviteReceiver", fields: [userId], references: [id])
+
+  @@index([groupId])
+  @@index([email])
+  @@index([token])
+  @@index([status])
+}
+
+model ExpenseSplit {
+  id             String @id @default(cuid())
+  groupExpenseId String
+  memberId       String
+  amount         Float
+  percentage     Float?
+
+  groupExpense GroupExpense @relation(fields: [groupExpenseId], references: [id], onDelete: Cascade)
+  member       GroupMember  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([groupExpenseId, memberId])
+  @@index([groupExpenseId])
+  @@index([memberId])
+}
+
+model GroupSettlement {
+  id           String   @id @default(cuid())
+  groupId      String
+  fromMemberId String
+  toMemberId   String
+  amount       Float
+  createdAt    DateTime @default(now())
+
+  group      Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  fromMember GroupMember @relation("SettlementFrom", fields: [fromMemberId], references: [id], onDelete: Cascade)
+  toMember   GroupMember @relation("SettlementTo", fields: [toMemberId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+  @@index([fromMemberId])
+  @@index([toMemberId])
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  groupId    String
+  action     String // "created" | "updated" | "deleted" | "settled"
+  entityType String // "expense" | "member" | "settlement"
+  entityId   String
+  details    String?
+  createdAt  DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, createdAt])
+}
