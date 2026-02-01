@@ -66,15 +66,10 @@ export async function aggregatePersonalExpensesByCategory(
 
 /**
  * Get category budgets (placeholder - can be extended to fetch from DB)
- * For now, returns default budgets per category
+ * Returns empty budgets by default - user must set budgets for signals to appear
  */
 export function getCategoryBudgets(): Record<string, number> {
-    return {
-        Food: 8000,
-        Travel: 5000,
-        Groceries: 6000,
-        Rent_utilities: 15000,
-        Personal_utilities: 4000,
-        Other: 3000,
-    };
+    // Return empty budgets - no hardcoded values
+    // Budget pressure signals will only appear when user sets budgets
+    return {};
 }

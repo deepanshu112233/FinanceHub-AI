@@ -12,15 +12,15 @@ export function buildVolatilitySignal(
     category: string,
     data: DailyCategorySpend[]
 ): Signal | null {
-    // Need at least 7 days for meaningful volatility calculation
-    if (data.length < 7) return null;
+    // Need at least 1 day for volatility calculation
+    if (data.length < 1) return null;
 
     const values = data.map((d) => d.total);
     const vol = volatility(values);
     const classification = classifyVolatility(vol);
 
-    // Only report if volatility is noteworthy
-    if (classification === "NORMAL") return null;
+    // Report all volatility levels (even NORMAL) to show something
+    // if (classification === "NORMAL") return null;
 
     const severity: SignalSeverity = classification === "HIGH" ? "MEDIUM" : "LOW";
 
@@ -41,8 +41,8 @@ export function buildVolatilitySignal(
         severity,
         title: `${emoji} ${category} spending is ${adjective}`,
         message: `Your ${category.toLowerCase()} spending ${classification === "HIGH"
-                ? "varies significantly day-to-day (high volatility)"
-                : "is very consistent (low volatility)"
+            ? "varies significantly day-to-day (high volatility)"
+            : "is very consistent (low volatility)"
             }. Volatility score: ${(vol * 100).toFixed(0)}%`,
         dateRange: `Last ${data.length} days`,
         metadata,

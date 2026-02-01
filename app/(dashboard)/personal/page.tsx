@@ -46,9 +46,14 @@ export default function PersonalExpensePage() {
     });
     const [isLoading, setIsLoading] = useState(true);
 
+    // State for selected month (initialize empty to avoid SSR issues with Date)
+    const [selectedMonth, setSelectedMonth] = useState('');
+
     const fetchStats = async () => {
         try {
-            const response = await fetch("/api/dashboard/stats");
+            // Parse selected month to get year and month
+            const [year, month] = selectedMonth.split('-');
+            const response = await fetch(`/api/dashboard/stats?month=${month}&year=${year}`);
             if (response.ok) {
                 const data = await response.json();
                 setStats(data);
@@ -60,9 +65,21 @@ export default function PersonalExpensePage() {
         }
     };
 
+    // Set initial month after component mounts (client-side only to avoid SSR warning)
     useEffect(() => {
-        fetchStats();
+        if (!selectedMonth) {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            setSelectedMonth(`${year}-${month}`);
+        }
     }, []);
+
+    useEffect(() => {
+        if (selectedMonth) {
+            fetchStats();
+        }
+    }, [selectedMonth]); // Re-fetch when selected month changes
 
     const handleDataUpdate = () => {
         fetchStats();
@@ -83,10 +100,28 @@ export default function PersonalExpensePage() {
         <div className="p-6 max-w-7xl mx-auto space-y-6">
             {/* Header */}
             <div className="mb-6">
-                <h1 className="text-3xl font-bold mb-2">Personal Finance Tracker</h1>
-                <p className="text-zinc-500 dark:text-zinc-400">
-                    Track your income and expenses for the current month
-                </p>
+                <div className="flex items-center justify-between mb-2">
+                    <div>
+                        <h1 className="text-3xl font-bold mb-2">Personal Finance Tracker</h1>
+                        <p className="text-zinc-500 dark:text-zinc-400">
+                            Track your income and expenses
+                        </p>
+                    </div>
+                    {/* Month Selector */}
+                    <div className="flex items-center gap-3">
+                        <label htmlFor="month-selector" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                            View Month:
+                        </label>
+                        <input
+                            id="month-selector"
+                            type="month"
+                            value={selectedMonth}
+                            onChange={(e) => setSelectedMonth(e.target.value)}
+                            max={typeof window !== 'undefined' ? new Date().toISOString().slice(0, 7) : undefined}
+                            className="px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                </div>
             </div>
 
             {/* Tabs */}
@@ -112,7 +147,7 @@ export default function PersonalExpensePage() {
                     <ExpenseForm onExpenseAdded={handleDataUpdate} />
 
                     {/* Category Spending - Pie Chart with Expense List */}
-                    <CategorySpendingPieChart spendingByCategory={stats.spendingByCategory} />
+                    <CategorySpendingPieChart spendingByCategory={stats.spendingByCategory} selectedMonth={selectedMonth} />
 
                     {/* Recent Transactions */}
                     <RecentTransactions transactions={stats.recentTransactions} onTransactionUpdated={handleDataUpdate} />
@@ -120,7 +155,7 @@ export default function PersonalExpensePage() {
 
                 {/* AI Insight Tab */}
                 <TabsContent value="ai-insight" className="space-y-6 mt-6">
-                    <AIInsightsView />
+                    <AIInsightsView selectedMonth={selectedMonth} />
                 </TabsContent>
             </Tabs>
         </div>

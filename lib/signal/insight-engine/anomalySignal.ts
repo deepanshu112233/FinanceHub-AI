@@ -11,8 +11,8 @@ export function buildAnomalySignal(
     category: string,
     data: DailyCategorySpend[]
 ): Signal | null {
-    // Need at least 7 days to establish baseline
-    if (data.length < 7) return null;
+    // Need at least 1 day to establish baseline
+    if (data.length < 1) return null;
 
     const ewmaPoints = computeEWMAWithAnomalies(data, 0.3, 2.5);
 

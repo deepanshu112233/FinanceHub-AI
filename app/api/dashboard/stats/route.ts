@@ -15,10 +15,18 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // Get current month date range
-        const now = new Date();
-        const monthStart = startOfMonth(now);
-        const monthEnd = endOfMonth(now);
+        // Get month and year from query parameters (optional)
+        const searchParams = request.nextUrl.searchParams;
+        const monthParam = searchParams.get('month');
+        const yearParam = searchParams.get('year');
+
+        // Use provided month/year or default to current month
+        const targetDate = (monthParam && yearParam)
+            ? new Date(parseInt(yearParam), parseInt(monthParam) - 1)
+            : new Date();
+
+        const monthStart = startOfMonth(targetDate);
+        const monthEnd = endOfMonth(targetDate);
 
         // Get total income for current month
         const incomeRecords = await prisma.income.findMany({

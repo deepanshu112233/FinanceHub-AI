@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   logging: {
     fetches: {
-      fullUrl: true,  
+      fullUrl: true,
     }
   },
   experimental: {

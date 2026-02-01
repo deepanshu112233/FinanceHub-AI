@@ -5,6 +5,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recha
 
 interface CategorySpendingPieChartProps {
     spendingByCategory: Record<string, { total: number; count: number }>;
+    selectedMonth: string; // Format: "YYYY-MM"
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -16,7 +17,15 @@ const CATEGORY_COLORS: Record<string, string> = {
     "Other": "#6b7280", // gray
 };
 
-export function CategorySpendingPieChart({ spendingByCategory }: CategorySpendingPieChartProps) {
+export function CategorySpendingPieChart({ spendingByCategory, selectedMonth }: CategorySpendingPieChartProps) {
+    // Format the selected month for display
+    const formatMonth = (monthStr: string) => {
+        const [year, month] = monthStr.split('-');
+        const date = new Date(parseInt(year), parseInt(month) - 1);
+        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    };
+
+    const displayMonth = formatMonth(selectedMonth);
     // Prepare data for pie chart
     const chartData = Object.entries(spendingByCategory)
         .filter(([_, data]) => data.total > 0)
@@ -60,9 +69,9 @@ export function CategorySpendingPieChart({ spendingByCategory }: CategorySpendin
     if (chartData.length === 0) {
         return (
             <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-6">This Month's Expenses</h3>
+                <h3 className="text-lg font-semibold mb-6">{displayMonth} Expenses</h3>
                 <div className="flex items-center justify-center h-64 text-zinc-400">
-                    <p>No expenses recorded this month</p>
+                    <p>No expenses recorded for {displayMonth}</p>
                 </div>
             </Card>
         );
@@ -71,7 +80,7 @@ export function CategorySpendingPieChart({ spendingByCategory }: CategorySpendin
     return (
         <Card className="p-6">
             <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">This Month's Expenses</h3>
+                <h3 className="text-lg font-semibold">{displayMonth} Expenses</h3>
                 <div className="text-right">
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">TOTAL</p>
                     <p className="text-xl font-bold">${totalSpent.toFixed(2)}</p>

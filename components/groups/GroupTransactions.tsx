@@ -158,8 +158,14 @@ export function GroupTransactions() {
     if (isError) {
         return (
             <Card className="p-6">
-                <div className="text-center py-8">
-                    <p className="text-red-600 dark:text-red-400">Failed to load transactions</p>
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-zinc-900 dark:text-white">Recent Transactions</h3>
+                </div>
+                <div className="text-center py-12">
+                    <p className="text-zinc-500 dark:text-zinc-400">No transactions yet</p>
+                    <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-2">
+                        Add an expense to get started
+                    </p>
                 </div>
             </Card>
         );

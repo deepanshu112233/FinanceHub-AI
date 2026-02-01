@@ -32,14 +32,27 @@ export default function InsightsPage() {
             const response = await fetch('/api/insights/monthly-breakdown');
 
             if (!response.ok) {
-                throw new Error('Failed to fetch data');
+                // 404 means user not found - treat as empty state, not error
+                if (response.status === 404) {
+                    console.log('User not found in database - showing empty state');
+                    setMonthlyExpenses([]);
+                    setIsLoading(false);
+                    return;
+                }
+
+                // For other errors (401, 500, etc.), log and throw
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                console.error(`Failed to fetch monthly breakdown - Status: ${response.status}`, errorData);
+                throw new Error('Unable to load insights. Please try again later.');
             }
 
             const data = await response.json();
             setMonthlyExpenses(data);
+            console.log(`Successfully fetched monthly breakdown - ${data.length} months`);
         } catch (err) {
             console.error('Error fetching monthly breakdown:', err);
-            setError('Failed to load expense data');
+            // Only set error for actual failures (network errors, server errors, etc.)
+            setError(err instanceof Error ? err.message : 'An unexpected error occurred');
         } finally {
             setIsLoading(false);
         }
@@ -61,8 +74,37 @@ export default function InsightsPage() {
     if (error) {
         return (
             <div className="p-6">
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                    <p className="text-red-600 dark:text-red-400">{error}</p>
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-6 text-center">
+                    <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-100 mb-2">
+                        No Insights Available
+                    </h3>
+                    <p className="text-amber-700 dark:text-amber-300">{error}</p>
+                    <p className="text-sm text-amber-600 dark:text-amber-400 mt-2">
+                        Add some expenses in the Personal tab to see AI-powered insights.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    // Empty state - when no expenses yet
+    if (monthlyExpenses.length === 0) {
+        return (
+            <div className="p-6">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-8 text-center">
+                    <div className="text-5xl mb-4">📊</div>
+                    <h3 className="text-xl font-bold text-blue-900 dark:text-blue-100 mb-2">
+                        Start Tracking Your Expenses
+                    </h3>
+                    <p className="text-blue-700 dark:text-blue-300 mb-4">
+                        Add your first expense to unlock AI-powered insights and spending analysis.
+                    </p>
+                    <a
+                        href="/personal"
+                        className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                    >
+                        Go to Personal Expenses
+                    </a>
                 </div>
             </div>
         );

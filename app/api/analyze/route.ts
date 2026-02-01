@@ -17,8 +17,18 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Aggregate expense data by category
-        const categoryData = await aggregatePersonalExpensesByCategory(user.id);
+        // Get month and year from query parameters (optional)
+        const searchParams = request.nextUrl.searchParams;
+        const monthParam = searchParams.get('month');
+        const yearParam = searchParams.get('year');
+
+        // Use provided month/year or default to current month
+        const targetDate = (monthParam && yearParam)
+            ? new Date(parseInt(yearParam), parseInt(monthParam) - 1)
+            : new Date();
+
+        // Aggregate expense data by category for the specified month
+        const categoryData = await aggregatePersonalExpensesByCategory(user.id, targetDate);
 
         // Get category budgets
         const budgets = getCategoryBudgets();

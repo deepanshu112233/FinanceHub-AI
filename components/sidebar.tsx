@@ -55,7 +55,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
             {/* Overlay for mobile */}
             {isMobileMenuOpen && (
                 <div
-                    className="lg:hidden fixed inset-0 bg-black/50 z-30"
+                    className="lg:hidden fixed inset-0 bg-black/50 z-20"
                     onClick={() => setIsMobileMenuOpen(false)}
                 />
             )}
@@ -63,7 +63,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
             {/* Sidebar */}
             <aside
                 className={cn(
-                    'fixed left-0 top-0 z-20 h-screen w-64 bg-[#1e293b] border-r border-slate-700 transition-transform duration-300',
+                    'fixed left-0 top-0 z-40 h-screen w-64 bg-[#1e293b] border-r border-slate-700 transition-transform duration-300',
                     isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
                 )}
             >

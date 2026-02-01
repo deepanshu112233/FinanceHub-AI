@@ -7,8 +7,9 @@ import { InsightCard } from "./InsightCard";
 import { UnifiedSpendChart } from "./UnifiedSpendChart";
 import { Loader2 } from "lucide-react";
 
-const CACHE_KEY = "ai_insights_cache";
+// Cache duration and key prefix
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+const getCacheKey = (month: string) => `ai_insights_cache_${month}`;
 
 interface CachedData {
     signals: Signal[];
@@ -16,15 +17,21 @@ interface CachedData {
     timestamp: number;
 }
 
-export function AIInsightsView() {
+interface AIInsightsViewProps {
+    selectedMonth: string; // Format: "YYYY-MM"
+}
+
+export function AIInsightsView({ selectedMonth }: AIInsightsViewProps) {
     const [signals, setSignals] = useState<Signal[]>([]);
     const [chartData, setChartData] = useState<Record<string, EWMAPoint[]>>({});
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchInsights();
-    }, []);
+        if (selectedMonth) {
+            fetchInsights();
+        }
+    }, [selectedMonth]); // Re-fetch when month changes
 
     const fetchInsights = async () => {
         setIsLoading(true);
@@ -42,8 +49,9 @@ export function AIInsightsView() {
             }
 
             // Fetch fresh data if cache is invalid/expired
-            console.log("🔄 Fetching fresh AI insights");
-            const response = await fetch("/api/analyze");
+            console.log(`🔄 Fetching AI insights for ${selectedMonth}`);
+            const [year, month] = selectedMonth.split('-');
+            const response = await fetch(`/api/analyze?month=${month}&year=${year}`);
             if (response.ok) {
                 const data = await response.json();
                 setSignals(data.signals || []);
@@ -70,7 +78,8 @@ export function AIInsightsView() {
     // Get cached data if valid
     const getCachedData = (): CachedData | null => {
         try {
-            const cached = localStorage.getItem(CACHE_KEY);
+            const cacheKey = getCacheKey(selectedMonth);
+            const cached = localStorage.getItem(cacheKey);
             if (!cached) return null;
 
             const data: CachedData = JSON.parse(cached);
@@ -82,7 +91,7 @@ export function AIInsightsView() {
             }
 
             // Cache expired, remove it
-            localStorage.removeItem(CACHE_KEY);
+            localStorage.removeItem(cacheKey);
             return null;
         } catch (error) {
             console.error("Error reading cache:", error);
@@ -93,7 +102,8 @@ export function AIInsightsView() {
     // Set cached data
     const setCachedData = (data: CachedData) => {
         try {
-            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+            const cacheKey = getCacheKey(selectedMonth);
+            localStorage.setItem(cacheKey, JSON.stringify(data));
         } catch (error) {
             console.error("Error setting cache:", error);
         }
@@ -103,8 +113,9 @@ export function AIInsightsView() {
     useEffect(() => {
         // Listen for custom event to invalidate cache
         const handleInvalidateCache = () => {
-            console.log("🗑️ Cache invalidated");
-            localStorage.removeItem(CACHE_KEY);
+            console.log("🗑️ Cache invalidated for", selectedMonth);
+            const cacheKey = getCacheKey(selectedMonth);
+            localStorage.removeItem(cacheKey);
             fetchInsights();
         };
 

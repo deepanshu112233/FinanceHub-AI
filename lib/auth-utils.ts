@@ -55,21 +55,32 @@ export async function getOrCreateUser() {
         return user;
     }
 
-    // Create new user
+    // Create or update user (upsert to handle case where user exists but wasn't found)
     const firstName = clerkUser.firstName || '';
     const lastName = clerkUser.lastName || '';
     const fullName = `${firstName} ${lastName}`.trim();
     const userName = email.split('@')[0];
 
-    user = await prisma.user.create({
-        data: {
-            clerkId: clerkUser.id,
-            email,
-            name: fullName || userName || 'User',
-            status: 'ACTIVE',  // Users with Clerk accounts are ACTIVE
-        },
-    });
+    try {
+        user = await prisma.user.upsert({
+            where: { email },
+            update: {
+                clerkId: clerkUser.id,
+                status: 'ACTIVE',
+                name: fullName || userName || 'User',
+            },
+            create: {
+                clerkId: clerkUser.id,
+                email,
+                name: fullName || userName || 'User',
+                status: 'ACTIVE',
+            },
+        });
 
-    console.log(`✅ Created new user: ${user.email}`);
-    return user;
+        console.log(`✅ User authenticated: ${user.email}`);
+        return user;
+    } catch (error) {
+        console.error('❌ Error creating/updating user:', error);
+        throw error;
+    }
 }

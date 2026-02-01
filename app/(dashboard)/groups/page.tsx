@@ -74,8 +74,11 @@ export default function GroupsPage() {
                 if (!selectedGroupId && fetchedGroups.length > 0) {
                     setSelectedGroupId(fetchedGroups[0].id);
                 }
+
+                console.log(`Successfully fetched ${fetchedGroups.length} groups`);
             } else {
-                console.error('Failed to fetch groups');
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                console.error(`Failed to fetch groups - Status: ${response.status}`, errorData);
             }
         } catch (error) {
             console.error('Error fetching groups:', error);

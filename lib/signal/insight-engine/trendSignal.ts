@@ -11,8 +11,8 @@ export function buildTrendSignal(
     category: string,
     data: DailyCategorySpend[]
 ): Signal | null {
-    // Need at least 5 days of data to establish a trend
-    if (data.length < 5) return null;
+    // Need at least 1 day to establish baseline
+    if (data.length < 1) return null;
 
     const ewmaPoints = computeEWMAWithAnomalies(data);
     const trend = getEWMATrend(ewmaPoints);
@@ -28,8 +28,8 @@ export function buildTrendSignal(
     if (absChangePct > 20) severity = "HIGH";
     else if (absChangePct > 10) severity = "MEDIUM";
 
-    // Only report significant trends
-    if (absChangePct < 5) return null;
+    // Only report significant trends (reduced threshold for quicker insights)
+    if (absChangePct < 1) return null;
 
     const direction = trend > 0 ? "UP" : "DOWN";
     const emoji = trend > 0 ? "📈" : "📉";
