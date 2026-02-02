@@ -1,65 +1,66 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { mutate } from "swr";
 import { invalidateCache } from "@/lib/cache-utils";
+import { Loader2 } from "lucide-react";
 
-interface CreateGroupDialogProps {
+interface EditGroupDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSuccess?: () => void;
+    groupId: string;
+    currentName: string;
+    currentDescription?: string;
 }
 
 const GROUPS_CACHE_KEY = "groups_data_cache";
 
-export function CreateGroupDialog({ open, onOpenChange, onSuccess }: CreateGroupDialogProps) {
-    const [name, setName] = useState("");
-    const [description, setDescription] = useState("");
+export function EditGroupDialog({
+    open,
+    onOpenChange,
+    groupId,
+    currentName,
+    currentDescription
+}: EditGroupDialogProps) {
+    const [name, setName] = useState(currentName);
+    const [description, setDescription] = useState(currentDescription || "");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError("");
         setIsSubmitting(true);
 
         try {
-            const response = await fetch('/api/groups', {
-                method: 'POST',
+            const response = await fetch(`/api/groups/${groupId}`, {
+                method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, description }),
             });
 
             if (response.ok) {
-                console.log('✅ Group created successfully, refreshing groups list...');
+                console.log('✅ Group updated successfully');
 
-                // Invalidate custom cache used by groups page
+                // Invalidate cache and dispatch event
                 invalidateCache(GROUPS_CACHE_KEY);
-
-                // Dispatch custom event to notify groups page to refresh
                 window.dispatchEvent(new CustomEvent('cache-invalidated'));
 
-                // Force refresh of groups list by invalidating SWR cache
-                await mutate('/api/groups');
-
-                // Small delay to ensure cache is updated
-                await new Promise(resolve => setTimeout(resolve, 500));
-
-                setName("");
-                setDescription("");
                 onOpenChange(false);
-                if (onSuccess) onSuccess();
 
-                console.log('🔄 Groups list refreshed');
+                // Reset form
+                setName(currentName);
+                setDescription(currentDescription || "");
             } else {
                 const data = await response.json();
-                alert(`Failed to create group: ${data.error || 'Unknown error'}`);
+                setError(data.error || 'Failed to update group');
             }
-        } catch (error) {
-            console.error('Failed to create group:', error);
-            alert('Network error occurred');
+        } catch (err) {
+            console.error('Failed to update group:', err);
+            setError('Network error occurred');
         } finally {
             setIsSubmitting(false);
         }
@@ -70,7 +71,7 @@ export function CreateGroupDialog({ open, onOpenChange, onSuccess }: CreateGroup
             <DialogContent className="sm:max-w-md bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-bold text-zinc-900 dark:text-white">
-                        Create New Group
+                        Edit Group
                     </DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-5 mt-4">
@@ -85,6 +86,7 @@ export function CreateGroupDialog({ open, onOpenChange, onSuccess }: CreateGroup
                             placeholder="e.g., Housemates, Trip to Bali..."
                             required
                             className="bg-white dark:bg-zinc-950 border-zinc-300 dark:border-zinc-700"
+                            disabled={isSubmitting}
                         />
                     </div>
                     <div className="space-y-2">
@@ -97,25 +99,40 @@ export function CreateGroupDialog({ open, onOpenChange, onSuccess }: CreateGroup
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="What is this group for?"
                             className="bg-white dark:bg-zinc-950 border-zinc-300 dark:border-zinc-700"
+                            disabled={isSubmitting}
                         />
                     </div>
-                    <div className="flex gap-3 pt-4">
+
+                    {error && (
+                        <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
+                            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                        </div>
+                    )}
+
+                    <DialogFooter className="flex gap-3 pt-4">
                         <Button
                             type="button"
                             variant="outline"
                             onClick={() => onOpenChange(false)}
-                            className="flex-1"
+                            disabled={isSubmitting}
                         >
                             Cancel
                         </Button>
                         <Button
                             type="submit"
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                            disabled={isSubmitting || !name}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            disabled={isSubmitting || !name.trim()}
                         >
-                            {isSubmitting ? "Creating..." : "Create Group"}
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                'Save Changes'
+                            )}
                         </Button>
-                    </div>
+                    </DialogFooter>
                 </form>
             </DialogContent>
         </Dialog>

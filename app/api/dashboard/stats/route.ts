@@ -1,157 +1,204 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrCreateUser } from '@/lib/auth-utils';
 import { prisma } from '@/lib/db';
-import { startOfMonth, endOfMonth } from 'date-fns';
 
+// GET dashboard statistics
 export async function GET(request: NextRequest) {
     try {
-        // Get or create the user
         const user = await getOrCreateUser();
-
         if (!user) {
-            return NextResponse.json(
-                { error: 'Unauthorized' },
-                { status: 401 }
-            );
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Get month and year from query parameters (optional)
-        const searchParams = request.nextUrl.searchParams;
-        const monthParam = searchParams.get('month');
-        const yearParam = searchParams.get('year');
+        // Get current month date range
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-        // Use provided month/year or default to current month
-        const targetDate = (monthParam && yearParam)
-            ? new Date(parseInt(yearParam), parseInt(monthParam) - 1)
-            : new Date();
+        // Get previous month date range for comparison
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
 
-        const monthStart = startOfMonth(targetDate);
-        const monthEnd = endOfMonth(targetDate);
-
-        // Get total income for current month
-        const incomeRecords = await prisma.income.findMany({
-            where: {
-                userId: user.id,
-                date: {
-                    gte: monthStart,
-                    lte: monthEnd,
+        // Fetch all data in parallel
+        const [
+            currentMonthIncome,
+            lastMonthIncome,
+            currentMonthExpenses,
+            lastMonthExpenses,
+            categoryStats,
+            userGroups,
+        ] = await Promise.all([
+            // Current month income
+            prisma.income.aggregate({
+                where: {
+                    userId: user.id,
+                    date: {
+                        gte: startOfMonth,
+                        lte: endOfMonth,
+                    },
                 },
-            },
-        });
+                _sum: { amount: true },
+            }),
 
-        const totalIncome = incomeRecords.reduce((sum, record) => sum + record.amount, 0);
-
-        // Group income by source
-        const incomeBySource = incomeRecords.reduce((acc, record) => {
-            acc[record.source] = (acc[record.source] || 0) + record.amount;
-            return acc;
-        }, {} as Record<string, number>);
-
-        // Get total expenses for current month
-        const expenseRecords = await prisma.personalExpense.findMany({
-            where: {
-                userId: user.id,
-                date: {
-                    gte: monthStart,
-                    lte: monthEnd,
+            // Last month income
+            prisma.income.aggregate({
+                where: {
+                    userId: user.id,
+                    date: {
+                        gte: startOfLastMonth,
+                        lte: endOfLastMonth,
+                    },
                 },
-            },
-        });
+                _sum: { amount: true },
+            }),
 
-        const totalExpenses = expenseRecords.reduce((sum, record) => sum + record.amount, 0);
+            // Current month expenses
+            prisma.personalExpense.aggregate({
+                where: {
+                    userId: user.id,
+                    date: {
+                        gte: startOfMonth,
+                        lte: endOfMonth,
+                    },
+                },
+                _sum: { amount: true },
+            }),
 
-        // Calculate spending by category
-        const spendingByCategory = expenseRecords.reduce((acc, record) => {
-            if (!acc[record.category]) {
-                acc[record.category] = {
-                    total: 0,
-                    count: 0,
-                };
+            // Last month expenses
+            prisma.personalExpense.aggregate({
+                where: {
+                    userId: user.id,
+                    date: {
+                        gte: startOfLastMonth,
+                        lte: endOfLastMonth,
+                    },
+                },
+                _sum: { amount: true },
+            }),
+
+            // Category breakdown for current month
+            prisma.personalExpense.groupBy({
+                by: ['category'],
+                where: {
+                    userId: user.id,
+                    date: {
+                        gte: startOfMonth,
+                        lte: endOfMonth,
+                    },
+                },
+                _sum: { amount: true },
+                orderBy: {
+                    _sum: {
+                        amount: 'desc',
+                    },
+                },
+                take: 5,
+            }),
+
+            // User's groups with balances
+            prisma.groupMember.findMany({
+                where: {
+                    userId: user.id,
+                },
+                include: {
+                    group: {
+                        select: {
+                            id: true,
+                            name: true,
+                            description: true,
+                            _count: {
+                                select: {
+                                    members: true,
+                                },
+                            },
+                        },
+                    },
+                },
+            }),
+        ]);
+
+        // Calculate income stats
+        const income = currentMonthIncome._sum.amount || 0;
+        const lastIncome = lastMonthIncome._sum.amount || 0;
+        const incomeChange = lastIncome > 0 ? ((income - lastIncome) / lastIncome) * 100 : 0;
+
+        // Calculate spending stats
+        const spending = currentMonthExpenses._sum.amount || 0;
+        const lastSpending = lastMonthExpenses._sum.amount || 0;
+        const spendingChange = lastSpending > 0 ? ((spending - lastSpending) / lastSpending) * 100 : 0;
+
+        // Get top category
+        const topCategory = categoryStats[0] || null;
+        const topCategoryData = topCategory
+            ? {
+                category: topCategory.category,
+                amount: topCategory._sum.amount || 0,
+                percentage: spending > 0 ? ((topCategory._sum.amount || 0) / spending) * 100 : 0,
             }
-            acc[record.category].total += record.amount;
-            acc[record.category].count += 1;
-            return acc;
-        }, {} as Record<string, { total: number; count: number }>);
+            : null;
 
-        // Get all transactions (expenses and income) - no limit
-        const recentExpenses = await prisma.personalExpense.findMany({
-            where: { userId: user.id },
-            orderBy: { date: 'desc' },
-            // Removed take limit to fetch all expenses
-        });
+        // Format groups data
+        const groups = userGroups.map((membership) => ({
+            id: membership.group.id,
+            name: membership.group.name,
+            description: membership.group.description,
+            memberCount: membership.group._count.members,
+            role: membership.role,
+        }));
 
-        const recentIncome = await prisma.income.findMany({
-            where: { userId: user.id },
-            orderBy: { date: 'desc' },
-            // Removed take limit to fetch all income
-        });
+        // Generate alerts based on spending patterns
+        const alerts = [];
 
-        // Combine and sort all transactions by date
-        const recentTransactions = [
-            ...recentExpenses.map(e => ({
-                id: e.id,
-                type: 'expense' as const,
-                amount: -e.amount,
-                category: e.category,
-                description: e.description,
-                date: e.date,
-            })),
-            ...recentIncome.map(i => ({
-                id: i.id,
-                type: 'income' as const,
-                amount: i.amount,
-                category: i.source,
-                description: i.description,
-                date: i.date,
-            })),
-        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        // Removed slice limit - all transactions will be returned
+        // Alert if spending increased significantly
+        if (spendingChange > 20) {
+            alerts.push({
+                type: 'warning',
+                message: `Your spending increased by ${spendingChange.toFixed(1)}% this month`,
+                category: 'spending',
+            });
+        }
 
-        // Calculate budget based on actual income (not a fixed limit)
-        // This shows how much of your earned income you've spent
-        const budgetLimit = totalIncome || 0; // Use total income as the budget
-        const budgetProgress = budgetLimit > 0 ? totalExpenses / budgetLimit : 0;
+        // Alert if income decreased
+        if (incomeChange < -10) {
+            alerts.push({
+                type: 'warning',
+                message: `Your income decreased by ${Math.abs(incomeChange).toFixed(1)}% this month`,
+                category: 'income',
+            });
+        }
+
+        // Alert if top category is very high
+        if (topCategoryData && topCategoryData.percentage > 40) {
+            alerts.push({
+                type: 'info',
+                message: `${topCategoryData.percentage.toFixed(0)}% of spending is on ${topCategoryData.category}`,
+                category: 'category',
+            });
+        }
 
         return NextResponse.json({
-            totalIncome,
-            totalExpenses,
-            incomeBySource,
-            spendingByCategory,
-            recentTransactions,
-            budget: {
-                limit: budgetLimit, // Now represents total income
-                spent: totalExpenses,
-                remaining: budgetLimit - totalExpenses,
-                progress: budgetProgress,
+            success: true,
+            data: {
+                income: {
+                    current: income,
+                    previous: lastIncome,
+                    change: incomeChange,
+                },
+                spending: {
+                    current: spending,
+                    previous: lastSpending,
+                    change: spendingChange,
+                },
+                topCategory: topCategoryData,
+                groups,
+                alerts,
             },
         });
-
     } catch (error) {
-        console.error('❌ Error fetching dashboard stats:');
-        console.error('Error details:', error);
-        if (error instanceof Error) {
-            console.error('Error message:', error.message);
-            console.error('Error stack:', error.stack);
-        }
-
+        console.error('❌ Error fetching dashboard stats:', error);
         return NextResponse.json(
-            {
-                error: 'Failed to fetch dashboard stats',
-                details: error instanceof Error ? error.message : 'Unknown error',
-                // Return default empty stats instead of just error
-                totalIncome: 0,
-                totalExpenses: 0,
-                incomeBySource: {},
-                spendingByCategory: {},
-                recentTransactions: [],
-                budget: {
-                    limit: 3500,
-                    spent: 0,
-                    remaining: 3500,
-                    progress: 0,
-                },
-            },
-            { status: 200 } // Return 200 with empty data instead of 500
+            { error: 'Failed to fetch dashboard statistics' },
+            { status: 500 }
         );
     }
 }

@@ -88,13 +88,16 @@ export function Topbar({
                     )}
 
                     {/* User profile button */}
-                    <UserButton
-                        appearance={{
-                            elements: {
-                                avatarBox: "w-9 h-9"
-                            }
-                        }}
-                    />
+                    <div suppressHydrationWarning>
+                        <UserButton
+                            appearance={{
+                                elements: {
+                                    avatarBox: "w-9 h-9"
+                                }
+                            }}
+                            afterSignOutUrl="/"
+                        />
+                    </div>
                 </div>
             </div>
         </header>

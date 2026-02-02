@@ -107,7 +107,21 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
                 },
                 take: 100,
             }),
-        ]);
+        ])
+
+            ;
+
+        console.log('📊 Group Summary Debug:');
+        console.log('- Total members fetched:', members.length);
+        console.log('- Member details:', members.map(m => ({
+            id: m.id,
+            userId: m.userId,
+            userName: m.user?.name,
+            userEmail: m.user?.email,
+            userStatus: m.user?.status,
+            role: m.role,
+            status: m.status
+        })));
 
         // Calculate total group spend
         const totalSpend = expenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -133,6 +147,8 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
                 joinedAt: member.joinedAt,
             };
         });
+
+        console.log('- Members with balances:', membersWithBalances.length);
 
         // Find current user's balance
         const userMembership = members.find(m => m.userId === user.id);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { GroupDataProvider } from "@/contexts/GroupDataContext";
 import { GroupsSidebar } from "@/components/groups/GroupsSidebar";
@@ -41,7 +41,7 @@ export default function GroupsPage() {
     const [refreshKey, setRefreshKey] = useState(0);
 
     // Fetch groups from API with caching
-    const fetchGroups = async (forceRefresh = false) => {
+    const fetchGroups = useCallback(async (forceRefresh = false) => {
         try {
             // Check cache first (skip if force refresh)
             if (!forceRefresh) {
@@ -85,11 +85,11 @@ export default function GroupsPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [selectedGroupId]);
 
-    // Fetch groups on mount
+    // Fetch groups on mount (use cache for performance)
     useEffect(() => {
-        fetchGroups();
+        fetchGroups(); // Use cache if available
     }, []);
 
     // Listen for cache invalidation events
@@ -102,7 +102,7 @@ export default function GroupsPage() {
 
         window.addEventListener('cache-invalidated', handleCacheInvalidation);
         return () => window.removeEventListener('cache-invalidated', handleCacheInvalidation);
-    }, []);
+    }, [fetchGroups]);
 
     // Function to trigger refresh of all data
     const handleDataRefresh = () => {
@@ -117,6 +117,8 @@ export default function GroupsPage() {
         icon: '👥', // Default icon, you can enhance this later
         balance: group.balance,
         activeMembers: group.memberCount,
+        role: group.role,
+        description: group.description,
     }));
 
     // Find selected group

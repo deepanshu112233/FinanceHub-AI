@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Loader2, UserPlus } from 'lucide-react';
 import Link from 'next/link';
+import { invalidateCache } from '@/lib/cache-utils';
 
 export default function CreateGroupPage() {
     const router = useRouter();
@@ -76,6 +77,12 @@ export default function CreateGroupPage() {
                     }
                 }
             }
+
+            // Invalidate cache and dispatch event to notify groups page
+            const GROUPS_CACHE_KEY = "groups_data_cache";
+            invalidateCache(GROUPS_CACHE_KEY);
+            window.dispatchEvent(new CustomEvent('cache-invalidated'));
+            console.log('✅ Group created successfully, cache invalidated');
 
             // Success! Navigate back to groups page
             router.push('/groups');

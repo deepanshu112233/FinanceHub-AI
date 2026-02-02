@@ -54,6 +54,9 @@ export async function GET(request: NextRequest) {
             };
         });
 
+        console.log(`📊 Fetched ${groupsWithBalances.length} groups for user ${user.id}:`,
+            groupsWithBalances.map(g => g.name).join(', '));
+
         return NextResponse.json({ groups: groupsWithBalances });
     } catch (error) {
         console.error('❌ Error fetching groups:', error);
