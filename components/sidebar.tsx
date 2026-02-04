@@ -76,7 +76,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
                             </div>
                             <div>
                                 <h2 className="text-lg font-bold text-white">
-                                    QuantEx
+                                    FinanceHub
                                 </h2>
                                 <p className="text-xs text-slate-400 uppercase tracking-wider">
                                     Intelligence
@@ -113,7 +113,7 @@ export function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: SidebarProps)
                     {/* Footer */}
                     <div className="p-4 border-t border-slate-700">
                         <div className="px-4 py-2 text-xs text-slate-500">
-                            © 2026 QuantEx Intelligence
+                            © 2026 FinanceHub Intelligence
                         </div>
                     </div>
                 </div>

@@ -65,18 +65,8 @@ export function Topbar({
 
                 {/* Right side actions */}
                 <div className="flex items-center gap-4">
-                    {/* Search bar */}
-                    <div className="hidden md:flex items-center relative">
-                        <Search className="absolute left-3 w-4 h-4 text-zinc-400" />
-                        <Input
-                            type="search"
-                            placeholder="Search transactions..."
-                            className="pl-10 w-64 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
-                        />
-                    </div>
-
-                    {/* Add button */}
-                    {showAddButton && (
+                    {/* Create Group button - only show on groups page */}
+                    {pathname === '/groups' && showAddButton && (
                         <Button
                             onClick={handleButtonClick}
                             className="bg-slate-800 hover:bg-slate-900 text-white"

@@ -54,7 +54,7 @@ export function buildAnomalySignal(
         confidence: Math.min(multiplier / 10, 1), // normalize to 0-1
         severity,
         title: "⚠️ Unusual large expense detected",
-        message: `Your ${category.toLowerCase()} spending was ${multiplier.toFixed(1)}× higher than usual on ${dateStr} ($${latestAnomaly.actual.toFixed(0)} vs baseline $${baseline.toFixed(0)})`,
+        message: `Your ${category.toLowerCase()} spending was ${multiplier.toFixed(1)}x higher than usual on ${dateStr} ($${latestAnomaly.actual.toFixed(0)} vs baseline $${baseline.toFixed(0)})`,
         dateRange: dateStr,
         metadata,
         generatedAt: new Date(),

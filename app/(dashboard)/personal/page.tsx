@@ -53,7 +53,7 @@ export default function PersonalExpensePage() {
         try {
             // Parse selected month to get year and month
             const [year, month] = selectedMonth.split('-');
-            const response = await fetch(`/api/dashboard/stats?month=${month}&year=${year}`);
+            const response = await fetch(`/api/personal/stats?month=${month}&year=${year}`);
             if (response.ok) {
                 const data = await response.json();
                 setStats(data);
