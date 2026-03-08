@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrCreateUser } from '@/lib/auth-utils';
 import { prisma } from '@/lib/db';
-
+import { Prisma } from '@prisma/client';
 
 interface RouteContext {
     params: Promise<{
@@ -157,7 +157,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
         }
 
         // Update expense with new splits in transaction
-        const result = await prisma.$transaction(async (tx: any) => {
+        const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             // Update expense
             const updatedExpense = await tx.groupExpense.update({
                 where: { id: expenseId },
@@ -286,7 +286,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
         }
 
         // Delete the expense in a transaction (cascade will delete splits)
-        await prisma.$transaction(async (tx: any) => {
+        await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             // Delete the expense
             await tx.groupExpense.delete({
                 where: { id: expenseId },
