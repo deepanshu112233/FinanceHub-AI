@@ -157,7 +157,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
         }
 
         // Update expense with new splits in transaction
-        const result = await prisma.$transaction(async (tx) => {
+        const result = await prisma.$transaction(async (tx: any) => {
             // Update expense
             const updatedExpense = await tx.groupExpense.update({
                 where: { id: expenseId },
@@ -286,7 +286,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
         }
 
         // Delete the expense in a transaction (cascade will delete splits)
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx: any) => {
             // Delete the expense
             await tx.groupExpense.delete({
                 where: { id: expenseId },
