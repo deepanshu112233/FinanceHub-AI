@@ -4,6 +4,7 @@ import { aggregatePersonalExpensesByCategory, getCategoryBudgets } from "@/lib/u
 import { generateAllSignals } from "@/lib/signal/insight-engine";
 import { computeEWMAWithAnomalies } from "@/lib/signal/analysis/ewma";
 
+
 /**
  * GET /api/analyze
  * Generates all AI insights/signals for the current user's personal expenses

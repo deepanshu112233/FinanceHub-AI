@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getOrCreateUser } from '@/lib/auth-utils';
 import { prisma } from '@/lib/db';
 
+
+
 // GET personal dashboard statistics
 export async function GET(request: NextRequest) {
+    // Opt into dynamic rendering to prevent auth() from running during Next.js static prerendering
+    const _optIntoDynamic = request.url;
     try {
         const user = await getOrCreateUser();
         if (!user) {

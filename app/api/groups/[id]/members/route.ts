@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getOrCreateUser } from '@/lib/auth-utils';
 import { prisma } from '@/lib/db';
 
+
 // GET members for a specific group
 export async function GET(
     request: NextRequest,

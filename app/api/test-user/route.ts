@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getOrCreateUser } from '@/lib/auth-utils';
 
+
 /**
  * Test endpoint to verify user auto-creation works
  * GET /api/test-user
  */
-export async function GET() {
+export async function GET(request: Request) {
+    // Opt into dynamic rendering to prevent auth() from running during Next.js static prerendering
+    const _optIntoDynamic = request.url;
     try {
         const user = await getOrCreateUser();
 

@@ -3,6 +3,7 @@ import { getOrCreateUser } from '@/lib/auth-utils';
 import { prisma } from '@/lib/db';
 import { getDebtTree } from '@/lib/splitwise-utils';
 
+
 interface RouteContext {
     params: Promise<{
         id: string;

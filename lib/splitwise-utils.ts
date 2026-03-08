@@ -7,8 +7,12 @@ import { prisma } from './db';
  * balance(Member) = 
  *   (total paid by Member) 
  *   − (total expense share of Member)
- *   + (settlements received by Member)
- *   − (settlements paid by Member)
+ *   − (settlements paid by Member)     [reduces debt - balance increases toward 0]
+ *   + (settlements received by Member)  [reduces credit - balance decreases toward 0]
+ * 
+ * Note: Settlements REDUCE outstanding debts, bringing balances closer to zero.
+ * A positive balance means the member is owed money.
+ * A negative balance means the member owes money.
  */
 
 interface MemberBalance {
@@ -167,16 +171,16 @@ export async function calculateGroupBalances(groupId: string): Promise<MemberBal
 
     // Process settlements
     for (const settlement of settlements) {
-        // Receiver gets credit
+        // Receiver - the person who was owed gets paid, so their credit is reduced
         if (balanceMap[settlement.toMemberId]) {
             balanceMap[settlement.toMemberId].settlementsReceived += settlement.amount;
-            balanceMap[settlement.toMemberId].balance += settlement.amount;
+            balanceMap[settlement.toMemberId].balance -= settlement.amount;
         }
 
-        // Payer gets debited
+        // Payer - the person who owed pays, so their debt is reduced
         if (balanceMap[settlement.fromMemberId]) {
             balanceMap[settlement.fromMemberId].settlementsPaid += settlement.amount;
-            balanceMap[settlement.fromMemberId].balance -= settlement.amount;
+            balanceMap[settlement.fromMemberId].balance += settlement.amount;
         }
     }
 
@@ -254,14 +258,14 @@ export async function getDebtTree(groupId: string): Promise<DebtRelationship[]> 
 
     // Subtract settlements to get remaining balances
     for (const settlement of settlements) {
-        // Receiver gets credit reduced (they received payment)
-        if (balanceMap[settlement.toMemberId] !== undefined) {
-            balanceMap[settlement.toMemberId] -= settlement.amount;
-        }
-
-        // Payer gets debt reduced (they paid)
+        // Payer gets debt reduced (they paid) - balance becomes less negative
         if (balanceMap[settlement.fromMemberId] !== undefined) {
             balanceMap[settlement.fromMemberId] += settlement.amount;
+        }
+
+        // Receiver gets credit reduced (they received payment) - balance becomes less positive
+        if (balanceMap[settlement.toMemberId] !== undefined) {
+            balanceMap[settlement.toMemberId] -= settlement.amount;
         }
     }
 

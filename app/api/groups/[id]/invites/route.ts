@@ -3,6 +3,7 @@ import { getOrCreateUser } from '@/lib/auth-utils';
 import { prisma } from '@/lib/db';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 
+
 // POST - Create invitation
 export async function POST(
     request: NextRequest,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
+
 // GET - Get invite details by token
 export async function GET(
     request: NextRequest,

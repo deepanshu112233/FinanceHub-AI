@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getOrCreateUser } from '@/lib/auth-utils';
 import { prisma } from '@/lib/db';
 
+
+
 // GET dashboard statistics
 export async function GET(request: NextRequest) {
+    // Opt into dynamic rendering to prevent auth() from running during Next.js static prerendering
+    const _optIntoDynamic = request.url;
     try {
         const user = await getOrCreateUser();
         if (!user) {
@@ -138,7 +142,7 @@ export async function GET(request: NextRequest) {
             : null;
 
         // Format groups data
-        const groups = userGroups.map((membership) => ({
+        const groups = userGroups.map((membership: any) => ({
             id: membership.group.id,
             name: membership.group.name,
             description: membership.group.description,
