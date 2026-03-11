@@ -51,18 +51,18 @@ export function MonthlyExpenseChart({ data }: MonthlyExpenseChartProps) {
     };
 
     return (
-        <div className="w-full bg-white dark:bg-zinc-950 rounded-lg border border-zinc-200 dark:border-zinc-800 p-6">
+        <div className="w-full bg-white dark:bg-zinc-950 rounded-lg border border-zinc-200 dark:border-zinc-800 p-3 sm:p-6">
             {/* Header with Time Range Tabs */}
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-zinc-900 dark:text-white">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
+                <h2 className="text-base sm:text-xl font-bold text-zinc-900 dark:text-white">
                     Month-wise Total Expenses
                 </h2>
-                <div className="flex gap-2 bg-zinc-100 dark:bg-zinc-900 p-1 rounded-lg">
+                <div className="flex gap-1 sm:gap-2 bg-zinc-100 dark:bg-zinc-900 p-1 rounded-lg self-start">
                     {timeRanges.map((range) => (
                         <button
                             key={range}
                             onClick={() => setSelectedRange(range)}
-                            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${selectedRange === range
+                            className={`px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-medium rounded-md transition-colors ${selectedRange === range
                                 ? "bg-blue-600 text-white shadow-md"
                                 : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                                 }`}
@@ -77,7 +77,7 @@ export function MonthlyExpenseChart({ data }: MonthlyExpenseChartProps) {
             <ResponsiveContainer width="100%" height={300}>
                 <BarChart
                     data={filteredData}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                    margin={{ top: 10, right: 10, left: 0, bottom: 60 }}
                 >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis

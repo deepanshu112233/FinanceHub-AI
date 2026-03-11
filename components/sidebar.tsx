@@ -31,11 +31,6 @@ const navItems = [
         icon: Users,
     },
     {
-        title: 'All Transactions',
-        href: '/transactions',
-        icon: Receipt,
-    },
-    {
         title: 'AI Insight Reports',
         href: '/insights',
         icon: LineChart,

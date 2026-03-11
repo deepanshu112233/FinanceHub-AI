@@ -25,6 +25,39 @@ const CATEGORIES = [
     "Other",
 ];
 
+function DatePickerPopover({ date, onDateChange }: { date: Date; onDateChange: (d: Date) => void }) {
+    const [open, setOpen] = useState(false);
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button
+                    variant="outline"
+                    className={cn(
+                        "w-full h-10 justify-start text-left font-normal",
+                        !date && "text-muted-foreground"
+                    )}
+                >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, "MM/dd/yyyy") : <span>mm/dd/yyyy</span>}
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent side="top" align="start" className="w-auto p-0">
+                <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={(day) => {
+                        if (day) {
+                            onDateChange(day);
+                            setOpen(false);
+                        }
+                    }}
+                />
+            </PopoverContent>
+        </Popover>
+    );
+}
+
+
 export function ExpenseForm({ onExpenseAdded }: ExpenseFormProps) {
     const [amount, setAmount] = useState("");
     const [category, setCategory] = useState("");
@@ -172,23 +205,7 @@ export function ExpenseForm({ onExpenseAdded }: ExpenseFormProps) {
                     {/* Date */}
                     <div className="lg:col-span-2">
                         <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2 uppercase">Date</label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    className={cn(
-                                        "w-full h-10 justify-start text-left font-normal",
-                                        !date && "text-muted-foreground"
-                                    )}
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {date ? format(date, "MM/dd/yyyy") : <span>mm/dd/yyyy</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent side="top" align="start" className="w-auto p-0">
-                                <Calendar mode="single" selected={date} onSelect={(day) => day && setDate(day)} />
-                            </PopoverContent>
-                        </Popover>
+                        <DatePickerPopover date={date} onDateChange={setDate} />
                     </div>
 
                     {/* Notes/Description */}

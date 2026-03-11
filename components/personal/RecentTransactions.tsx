@@ -320,7 +320,8 @@ export function RecentTransactions({ transactions, onTransactionUpdated }: Recen
 
             {/* Transaction Table */}
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden">
-                <table className="w-full">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[600px]">
                     <thead className="bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800">
                         <tr>
                             <th className="p-4 w-10">
@@ -432,6 +433,7 @@ export function RecentTransactions({ transactions, onTransactionUpdated }: Recen
                         )}
                     </tbody>
                 </table>
+                </div>
             </div>
 
             {/* Pagination - Always visible */}

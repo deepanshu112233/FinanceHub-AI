@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Pencil, Trash2 } from "lucide-react";
+import { X, Pencil, Trash2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EditGroupDialog } from "@/components/groups/EditGroupDialog";
 import { DeleteGroupDialog } from "@/components/groups/DeleteGroupDialog";
@@ -52,7 +52,7 @@ export function GroupsSidebar({
             {/* Overlay for mobile */}
             {isOpen && (
                 <div
-                    className="lg:hidden fixed inset-0 bg-black/50 z-20"
+                    className="lg:hidden fixed inset-0 bg-black/50 z-10"
                     onClick={onClose}
                 />
             )}
@@ -66,15 +66,15 @@ export function GroupsSidebar({
             >
                 <div className="flex flex-col h-full">
                     {/* Header */}
-                    <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between lg:justify-center">
-                        <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase">
+                    <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900">
+                        <h2 className="text-sm font-bold text-zinc-700 dark:text-zinc-300">
                             Active Groups
                         </h2>
                         <button
                             onClick={onClose}
-                            className="lg:hidden p-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg"
+                            className="lg:hidden p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg bg-zinc-50 dark:bg-zinc-900 transition-colors"
                         >
-                            <X className="w-5 h-5" />
+                            <X className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
                         </button>
                     </div>
 
@@ -94,15 +94,17 @@ export function GroupsSidebar({
                                             onClose();
                                         }}
                                         className={cn(
-                                            "w-full p-4 rounded-lg text-left transition-colors",
+                                            "w-full p-4 rounded-3xl text-left transition-colors border",
                                             isSelected
-                                                ? "bg-blue-50 dark:bg-blue-950 border-2 border-blue-500"
-                                                : "bg-zinc-50 dark:bg-zinc-900 border-2 border-transparent hover:border-zinc-300 dark:hover:border-zinc-700"
+                                                ? "bg-white dark:bg-zinc-950 border-red-400 hover:border-red-500 shadow-sm"
+                                                : "bg-[#f8f9fa] dark:bg-zinc-900 border-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800"
                                         )}
                                     >
                                         <div className="flex items-start gap-3">
                                             {/* Icon */}
-                                            <div className="text-2xl">{group.icon}</div>
+                                            <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                                                <Users className="w-4 h-4" strokeWidth={2} />
+                                            </div>
 
                                             {/* Content */}
                                             <div className="flex-1 min-w-0">

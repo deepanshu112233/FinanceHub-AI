@@ -10,7 +10,7 @@ import { GroupTransactions } from "@/components/groups/GroupTransactions";
 import { GroupActivityLog } from "@/components/groups/GroupActivityLog";
 import { AIDebtInsight } from "@/components/groups/AIDebtInsight";
 import { AddExpenseDialog } from "@/components/groups/AddExpenseDialog";
-import { Menu, Loader2 } from "lucide-react";
+import { Menu, X, Loader2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getCachedData, setCachedData, invalidateCache } from "@/lib/cache-utils";
 
@@ -158,84 +158,89 @@ export default function GroupsPage() {
             {/* Main Content */}
             {selectedGroupId && (
                 <GroupDataProvider groupId={selectedGroupId}>
-                    <div className="flex-1 flex flex-col overflow-hidden">
-                        {/* Group Info Card */}
-                        <div className="bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-6">
-                                    <span className="text-4xl">👥</span>
-                                    <div className="flex items-center gap-8">
-                                        <div>
-                                            <h2 className="text-2xl font-bold text-zinc-900 dark:text-white">{selectedGroup?.name || 'Select a Group'}</h2>
-                                            <p className="text-zinc-600 dark:text-zinc-400 text-sm">
-                                                {selectedGroup && `${selectedGroup.memberCount} Member${selectedGroup.memberCount !== 1 ? 's' : ''}`}
-                                            </p>
-                                        </div>
-                                        {/* Total Group Spend inline */}
+                    <div className="flex-1 flex flex-col overflow-hidden relative">
+                        {/* Group Header */}
+                        <div className="bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800">
+                            {/* Row 1: Icon + Name + (desktop: TotalSpend) + buttons */}
+                            <div className="flex items-center justify-between px-4 pt-4 pb-2 sm:px-6 sm:pt-6">
+                                <div className="flex items-center gap-3 sm:gap-6">
+                                    <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                                        <Users className="w-5 h-5" strokeWidth={2} />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white leading-tight">{selectedGroup?.name || 'Select a Group'}</h2>
+                                        <p className="text-zinc-500 dark:text-zinc-400 text-xs uppercase tracking-wide">
+                                            {selectedGroup && `${selectedGroup.memberCount} Member${selectedGroup.memberCount !== 1 ? 's' : ''}`}
+                                        </p>
+                                    </div>
+                                    {/* Desktop inline Total Spend */}
+                                    <div className="hidden sm:block">
                                         <GroupTotalSpend />
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        onClick={() => setIsAddExpenseDialogOpen(true)}
-                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium transition-colors"
-                                    >
-                                        Add Expense
-                                    </button>
+                                <div className="flex items-center gap-2">
                                     {/* Mobile menu toggle */}
                                     <button
                                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                                        className="lg:hidden p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white"
+                                        className="lg:hidden p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 transition-colors"
                                     >
-                                        <Menu className="w-5 h-5" />
+                                        {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                                    </button>
+                                    {/* Desktop Add Expense */}
+                                    <button
+                                        onClick={() => setIsAddExpenseDialogOpen(true)}
+                                        className="hidden sm:flex px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-sm font-medium transition-colors items-center gap-2"
+                                    >
+                                        + Add Expense
                                     </button>
                                 </div>
                             </div>
 
-                            {/* Tab Navigation */}
-                            <div className="flex gap-4 border-b border-zinc-200 dark:border-zinc-800">
+                            {/* Mobile only: Total Group Spend Card */}
+                            <div className="px-4 pb-3 sm:hidden">
+                                <GroupTotalSpend />
+                            </div>
+
+                            {/* Row 3: Tab Navigation */}
+                            <div className="flex gap-4 px-4 sm:px-6 border-t border-zinc-100 dark:border-zinc-800/50">
                                 <button
                                     onClick={() => setActiveTab("info")}
                                     className={cn(
-                                        "pb-3 px-2 font-medium transition-colors relative",
+                                        "pt-3 pb-2.5 text-sm font-medium transition-colors relative",
                                         activeTab === "info"
                                             ? "text-blue-600 dark:text-blue-400"
-                                            : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                                            : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                                     )}
                                 >
                                     Info
                                     {activeTab === "info" && (
-                                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400" />
+                                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full" />
                                     )}
                                 </button>
                                 <button
                                     onClick={() => setActiveTab("logs")}
                                     className={cn(
-                                        "pb-3 px-2 font-medium transition-colors relative",
+                                        "pt-3 pb-2.5 text-sm font-medium transition-colors relative",
                                         activeTab === "logs"
                                             ? "text-blue-600 dark:text-blue-400"
-                                            : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                                            : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                                     )}
                                 >
                                     Logs
                                     {activeTab === "logs" && (
-                                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400" />
+                                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full" />
                                     )}
                                 </button>
                             </div>
                         </div>
 
-                        <main className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+                        {/* Content Area */}
+                        <main className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6 pb-20 sm:pb-6">
                             {/* Info Tab Content */}
                             {activeTab === "info" && (
                                 <>
-                                    {/* AI Debt Insight - Expanded */}
                                     <AIDebtInsight />
-
-                                    {/* Individual Balances */}
                                     <IndividualBalances />
-
-                                    {/* Recent Transactions - Full Width Table at Bottom */}
                                     <GroupTransactions />
                                 </>
                             )}
@@ -247,6 +252,16 @@ export default function GroupsPage() {
                                 </div>
                             )}
                         </main>
+
+                        {/* Sticky Bottom Add Expense Button - Mobile only */}
+                        <div className="sm:hidden fixed bottom-0 left-0 right-0 p-3 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 z-30">
+                            <button
+                                onClick={() => setIsAddExpenseDialogOpen(true)}
+                                className="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-xl text-white font-semibold transition-colors flex items-center justify-center gap-2 text-sm"
+                            >
+                                + Add Expense
+                            </button>
+                        </div>
                     </div>
 
                     {/* Add Expense Dialog */}

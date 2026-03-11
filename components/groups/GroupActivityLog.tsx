@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
@@ -17,20 +17,18 @@ interface Activity {
 
 export function GroupActivityLog() {
     const { data, isLoading } = useGroupData();
-    const activities = data?.activities || [];
-    const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
+    const activities = data?.activities ?? [];
     const [filter, setFilter] = useState("all");
 
-    useEffect(() => {
-        if (filter === "all") {
-            setFilteredActivities(activities);
-        } else if (filter === "expenses") {
-            setFilteredActivities(activities.filter(a => a.entityType === "expense"));
+    const filteredActivities = useMemo(() => {
+        if (filter === "expenses") {
+            return activities.filter(a => a.entityType === "expense");
         } else if (filter === "settlements") {
-            setFilteredActivities(activities.filter(a => a.entityType === "settlement"));
+            return activities.filter(a => a.entityType === "settlement");
         } else if (filter === "members") {
-            setFilteredActivities(activities.filter(a => a.entityType === "member"));
+            return activities.filter(a => a.entityType === "member");
         }
+        return activities;
     }, [filter, activities]);
 
     const formatTimestamp = (dateString: string) => {

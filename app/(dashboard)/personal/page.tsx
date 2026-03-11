@@ -8,6 +8,7 @@ import { CategorySpendingPieChart } from "@/components/personal/CategorySpending
 import { RecentTransactions } from "@/components/personal/RecentTransactions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AIInsightsView } from "@/components/insights/AIInsightsView";
+import { MonthYearPicker } from "@/components/ui/MonthYearPicker";
 
 interface DashboardStats {
     totalIncome: number;
@@ -97,28 +98,21 @@ export default function PersonalExpensePage() {
     }
 
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-6">
+        <div className="p-3 sm:p-6 max-w-7xl mx-auto space-y-4 sm:space-y-6 overflow-x-hidden">
             {/* Header */}
-            <div className="mb-6">
-                <div className="flex items-center justify-between mb-2">
+            <div className="mb-4 sm:mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
                     <div>
-                        <h1 className="text-3xl font-bold mb-2">Personal Finance Tracker</h1>
-                        <p className="text-zinc-500 dark:text-zinc-400">
+                        <h1 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">Personal Finance Tracker</h1>
+                        <p className="text-sm sm:text-base text-zinc-500 dark:text-zinc-400">
                             Track your income and expenses
                         </p>
                     </div>
                     {/* Month Selector */}
                     <div className="flex items-center gap-3">
-                        <label htmlFor="month-selector" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                            View Month:
-                        </label>
-                        <input
-                            id="month-selector"
-                            type="month"
+                        <MonthYearPicker
                             value={selectedMonth}
-                            onChange={(e) => setSelectedMonth(e.target.value)}
-                            max={typeof window !== 'undefined' ? new Date().toISOString().slice(0, 7) : undefined}
-                            className="px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            onChange={setSelectedMonth}
                         />
                     </div>
                 </div>
@@ -126,7 +120,7 @@ export default function PersonalExpensePage() {
 
             {/* Tabs */}
             <Tabs defaultValue="info" className="w-full">
-                <TabsList className="grid w-full max-w-md grid-cols-2">
+                <TabsList>
                     <TabsTrigger value="info">Info</TabsTrigger>
                     <TabsTrigger value="ai-insight">AI Insight</TabsTrigger>
                 </TabsList>

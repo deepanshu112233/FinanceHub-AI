@@ -111,13 +111,13 @@ export default function InsightsPage() {
     }
 
     return (
-        <div className="p-6 space-y-8 max-w-[1400px] mx-auto">
+        <div className="p-3 sm:p-6 space-y-4 sm:space-y-8 max-w-[1400px] mx-auto overflow-x-hidden">
             {/* Page Header */}
             <div>
-                <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">
+                <h1 className="text-xl sm:text-3xl font-bold text-zinc-900 dark:text-white">
                     AI Insights & Reports
                 </h1>
-                <p className="text-zinc-600 dark:text-zinc-400 mt-2">
+                <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 mt-1 sm:mt-2">
                     Analyze your spending patterns and get AI-powered financial insights
                 </p>
             </div>
@@ -135,7 +135,7 @@ export default function InsightsPage() {
 
             {/* Expense Breakdown Table */}
             <div>
-                <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-4">
+                <h2 className="text-base sm:text-xl font-bold text-zinc-900 dark:text-white mb-4">
                     Category-wise Expense Breakdown
                 </h2>
                 <ExpenseBreakdownTable data={monthlyExpenses} />
