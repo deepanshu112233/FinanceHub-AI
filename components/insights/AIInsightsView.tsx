@@ -49,7 +49,7 @@ export function AIInsightsView({ selectedMonth }: AIInsightsViewProps) {
             }
 
             // Fetch fresh data if cache is invalid/expired
-            console.log(`🔄 Fetching AI insights for ${selectedMonth}`);
+            // console.log(`🔄 Fetching AI insights for ${selectedMonth}`);
             const [year, month] = selectedMonth.split('-');
             const response = await fetch(`/api/analyze?month=${month}&year=${year}`);
             if (response.ok) {

@@ -66,7 +66,7 @@ export function GroupsSidebar({
             >
                 <div className="flex flex-col h-full">
                     {/* Header */}
-                    <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900">
+                    <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-center bg-zinc-50 dark:bg-zinc-900">
                         <h2 className="text-sm font-bold text-zinc-700 dark:text-zinc-300">
                             Active Groups
                         </h2>
@@ -96,8 +96,8 @@ export function GroupsSidebar({
                                         className={cn(
                                             "w-full p-4 rounded-3xl text-left transition-colors border",
                                             isSelected
-                                                ? "bg-white dark:bg-zinc-950 border-red-400 hover:border-red-500 shadow-sm"
-                                                : "bg-[#f8f9fa] dark:bg-zinc-900 border-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                                ? "bg-white dark:bg-zinc-950 border-blue-400 hover:border-blue-400 shadow-sm"
+                                                : "bg-[#f8f9fa] dark:bg-zinc-800 border-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800"
                                         )}
                                     >
                                         <div className="flex items-start gap-3">

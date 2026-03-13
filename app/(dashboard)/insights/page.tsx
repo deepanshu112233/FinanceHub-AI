@@ -114,10 +114,7 @@ export default function InsightsPage() {
         <div className="p-3 sm:p-6 space-y-4 sm:space-y-8 max-w-[1400px] mx-auto overflow-x-hidden">
             {/* Page Header */}
             <div>
-                <h1 className="text-xl sm:text-3xl font-bold text-zinc-900 dark:text-white">
-                    AI Insights & Reports
-                </h1>
-                <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 mt-1 sm:mt-2">
+                <p className="text-md sm:text-lg text-zinc-600 dark:text-zinc-400 mt-1 sm:mt-2">
                     Analyze your spending patterns and get AI-powered financial insights
                 </p>
             </div>

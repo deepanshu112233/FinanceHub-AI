@@ -202,7 +202,7 @@ export default function GroupsPage() {
                             </div>
 
                             {/* Row 3: Tab Navigation */}
-                            <div className="flex gap-4 px-4 sm:px-6 border-t border-zinc-100 dark:border-zinc-800/50">
+                            <div className="flex gap-4 px-4 sm:px-6 border-zinc-100 dark:border-zinc-800/50">
                                 <button
                                     onClick={() => setActiveTab("info")}
                                     className={cn(
@@ -239,7 +239,7 @@ export default function GroupsPage() {
                             {/* Info Tab Content */}
                             {activeTab === "info" && (
                                 <>
-                                    <AIDebtInsight />
+                                    {/* <AIDebtInsight /> */}
                                     <IndividualBalances />
                                     <GroupTransactions />
                                 </>

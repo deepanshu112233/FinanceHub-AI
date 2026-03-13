@@ -103,8 +103,7 @@ export default function PersonalExpensePage() {
             <div className="mb-4 sm:mb-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
                     <div>
-                        <h1 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">Personal Finance Tracker</h1>
-                        <p className="text-sm sm:text-base text-zinc-500 dark:text-zinc-400">
+                        <p className="text-md sm:text-lg text-zinc-600 dark:text-zinc-400 mt-1 sm:mt-2">
                             Track your income and expenses
                         </p>
                     </div>
