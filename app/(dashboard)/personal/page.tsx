@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { BudgetProgress } from "@/components/personal/BudgetProgress";
 import { IncomeTracker } from "@/components/personal/IncomeTracker";
 import { ExpenseForm } from "@/components/personal/ExpenseForm";
@@ -9,6 +9,8 @@ import { RecentTransactions } from "@/components/personal/RecentTransactions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AIInsightsView } from "@/components/insights/AIInsightsView";
 import { MonthYearPicker } from "@/components/ui/MonthYearPicker";
+
+const getPersonalCacheKey = (month: string) => `personal_stats_cache_${month}`;
 
 interface DashboardStats {
     totalIncome: number;
@@ -50,21 +52,36 @@ export default function PersonalExpensePage() {
     // State for selected month (initialize empty to avoid SSR issues with Date)
     const [selectedMonth, setSelectedMonth] = useState('');
 
-    const fetchStats = async () => {
+    const fetchStats = useCallback(async (month: string, skipCache = false) => {
         try {
-            // Parse selected month to get year and month
-            const [year, month] = selectedMonth.split('-');
-            const response = await fetch(`/api/personal/stats?month=${month}&year=${year}`);
+            // Check sessionStorage cache first
+            if (!skipCache) {
+                try {
+                    const cached = sessionStorage.getItem(getPersonalCacheKey(month));
+                    if (cached) {
+                        setStats(JSON.parse(cached));
+                        setIsLoading(false);
+                        return;
+                    }
+                } catch { /* ignore parse errors */ }
+            }
+
+            setIsLoading(true);
+            const [year, m] = month.split('-');
+            const response = await fetch(`/api/personal/stats?month=${m}&year=${year}`);
             if (response.ok) {
                 const data = await response.json();
                 setStats(data);
+                try {
+                    sessionStorage.setItem(getPersonalCacheKey(month), JSON.stringify(data));
+                } catch { /* ignore storage errors */ }
             }
         } catch (error) {
             console.error("Failed to fetch stats:", error);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     // Set initial month after component mounts (client-side only to avoid SSR warning)
     useEffect(() => {
@@ -78,12 +95,16 @@ export default function PersonalExpensePage() {
 
     useEffect(() => {
         if (selectedMonth) {
-            fetchStats();
+            fetchStats(selectedMonth);
         }
-    }, [selectedMonth]); // Re-fetch when selected month changes
+    }, [selectedMonth, fetchStats]); // Re-fetch when selected month changes
 
     const handleDataUpdate = () => {
-        fetchStats();
+        // Clear cache for current month and re-fetch
+        sessionStorage.removeItem(getPersonalCacheKey(selectedMonth));
+        // Also clear dashboard cache since it shows aggregated data
+        sessionStorage.removeItem("dashboard_data_cache");
+        fetchStats(selectedMonth, true);
     };
 
     if (isLoading) {

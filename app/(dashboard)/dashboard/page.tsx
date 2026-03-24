@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { IncomeCard } from "@/components/dashboard/IncomeCard";
 import { MonthlySpendCard } from "@/components/dashboard/MonthlySpendCard";
 import { TopCategoryCard } from "@/components/dashboard/TopCategoryCard";
 import { AlertsCard } from "@/components/dashboard/AlertsCard";
 import { UserGroupsList } from "@/components/dashboard/UserGroupsList";
 import { Loader2 } from "lucide-react";
+
+const DASHBOARD_CACHE_KEY = "dashboard_data_cache";
 
 interface DashboardData {
     income: {
@@ -42,24 +44,53 @@ export default function DashboardPage() {
     const [data, setData] = useState<DashboardData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        fetchDashboardData();
-    }, []);
-
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = useCallback(async (skipCache = false) => {
         try {
+            // Check sessionStorage cache first
+            if (!skipCache) {
+                try {
+                    const cached = sessionStorage.getItem(DASHBOARD_CACHE_KEY);
+                    if (cached) {
+                        setData(JSON.parse(cached));
+                        setIsLoading(false);
+                        return;
+                    }
+                } catch { /* ignore parse errors */ }
+            }
+
             setIsLoading(true);
             const response = await fetch('/api/dashboard/stats');
             if (response.ok) {
                 const result = await response.json();
                 setData(result.data);
+                try {
+                    sessionStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify(result.data));
+                } catch { /* ignore storage errors */ }
             }
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchDashboardData();
+    }, [fetchDashboardData]);
+
+    // Invalidate cache when expenses/income change
+    useEffect(() => {
+        const handleInvalidate = () => {
+            sessionStorage.removeItem(DASHBOARD_CACHE_KEY);
+            fetchDashboardData(true);
+        };
+        window.addEventListener("invalidate-insights-cache", handleInvalidate);
+        window.addEventListener("cache-invalidated", handleInvalidate);
+        return () => {
+            window.removeEventListener("invalidate-insights-cache", handleInvalidate);
+            window.removeEventListener("cache-invalidated", handleInvalidate);
+        };
+    }, [fetchDashboardData]);
 
     if (isLoading) {
         return (

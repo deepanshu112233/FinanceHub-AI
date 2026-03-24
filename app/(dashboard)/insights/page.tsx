@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { ExpenseBreakdownTable } from "@/components/insights/ExpenseBreakdownTable";
 import { MonthlyExpenseChart } from "@/components/insights/MonthlyExpenseChart";
 import { AIInsightCard } from "@/components/insights/AIInsightCard";
 import { Loader2 } from "lucide-react";
+
+const INSIGHTS_BREAKDOWN_CACHE_KEY = "insights_breakdown_cache";
 
 interface MonthlyExpenseData {
     month: string;
@@ -22,12 +24,20 @@ export default function InsightsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        fetchMonthlyBreakdown();
-    }, []);
-
-    const fetchMonthlyBreakdown = async () => {
+    const fetchMonthlyBreakdown = useCallback(async (skipCache = false) => {
         try {
+            // Check sessionStorage cache first
+            if (!skipCache) {
+                try {
+                    const cached = sessionStorage.getItem(INSIGHTS_BREAKDOWN_CACHE_KEY);
+                    if (cached) {
+                        setMonthlyExpenses(JSON.parse(cached));
+                        setIsLoading(false);
+                        return;
+                    }
+                } catch { /* ignore parse errors */ }
+            }
+
             setIsLoading(true);
             const response = await fetch('/api/insights/monthly-breakdown');
 
@@ -48,7 +58,9 @@ export default function InsightsPage() {
 
             const data = await response.json();
             setMonthlyExpenses(data);
-            console.log(`Successfully fetched monthly breakdown - ${data.length} months`);
+            try {
+                sessionStorage.setItem(INSIGHTS_BREAKDOWN_CACHE_KEY, JSON.stringify(data));
+            } catch { /* ignore storage errors */ }
         } catch (err) {
             console.error('Error fetching monthly breakdown:', err);
             // Only set error for actual failures (network errors, server errors, etc.)
@@ -56,7 +68,21 @@ export default function InsightsPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchMonthlyBreakdown();
+    }, [fetchMonthlyBreakdown]);
+
+    // Invalidate cache when expenses change
+    useEffect(() => {
+        const handleInvalidate = () => {
+            sessionStorage.removeItem(INSIGHTS_BREAKDOWN_CACHE_KEY);
+            fetchMonthlyBreakdown(true);
+        };
+        window.addEventListener("invalidate-insights-cache", handleInvalidate);
+        return () => window.removeEventListener("invalidate-insights-cache", handleInvalidate);
+    }, [fetchMonthlyBreakdown]);
 
     const chartData = monthlyExpenses.map(expense => ({
         month: expense.month,

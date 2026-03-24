@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Brain, TrendingUp, TrendingDown, AlertTriangle, Lightbulb, CheckCircle2, Loader2, RefreshCw, Minus } from "lucide-react";
+
+const AI_REPORT_CACHE_KEY = "ai_report_cache";
 
 interface AIHighlight {
     type: "warning" | "tip" | "positive";
@@ -21,8 +23,23 @@ export function AIInsightCard() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchReport = async () => {
+    const fetchReport = useCallback(async (skipCache = false) => {
         try {
+            // Check sessionStorage cache first
+            if (!skipCache) {
+                try {
+                    const cached = sessionStorage.getItem(AI_REPORT_CACHE_KEY);
+                    if (cached) {
+                        const cachedReport: AIReport = JSON.parse(cached);
+                        setReport(cachedReport);
+                        setIsLoading(false);
+                        return;
+                    }
+                } catch {
+                    // Ignore parse errors, just fetch fresh
+                }
+            }
+
             setIsLoading(true);
             setError(null);
             const res = await fetch("/api/insights/ai-report");
@@ -35,6 +52,12 @@ export function AIInsightCard() {
             const data = await res.json();
             if (data.report) {
                 setReport(data.report);
+                // Cache the report in sessionStorage
+                try {
+                    sessionStorage.setItem(AI_REPORT_CACHE_KEY, JSON.stringify(data.report));
+                } catch {
+                    // Ignore storage errors (e.g. quota exceeded)
+                }
             } else {
                 setError(data.message || "No data available");
             }
@@ -43,11 +66,27 @@ export function AIInsightCard() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    // Handle manual refresh — clear cache and re-fetch
+    const handleRefresh = useCallback(() => {
+        sessionStorage.removeItem(AI_REPORT_CACHE_KEY);
+        fetchReport(true);
+    }, [fetchReport]);
 
     useEffect(() => {
         fetchReport();
-    }, []);
+    }, [fetchReport]);
+
+    // Listen for cache invalidation events (e.g. when an expense is added)
+    useEffect(() => {
+        const handleInvalidate = () => {
+            sessionStorage.removeItem(AI_REPORT_CACHE_KEY);
+            fetchReport(true);
+        };
+        window.addEventListener("invalidate-ai-report-cache", handleInvalidate);
+        return () => window.removeEventListener("invalidate-ai-report-cache", handleInvalidate);
+    }, [fetchReport]);
 
     const getHighlightIcon = (type: string) => {
         switch (type) {
@@ -138,7 +177,7 @@ export function AIInsightCard() {
                 </div>
                 {!isLoading && (
                     <button
-                        onClick={fetchReport}
+                        onClick={handleRefresh}
                         className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
                         title="Refresh report"
                     >
@@ -166,7 +205,7 @@ export function AIInsightCard() {
                         </div>
                         <p className="text-sm text-zinc-500 dark:text-zinc-400">{error}</p>
                         <button
-                            onClick={fetchReport}
+                            onClick={handleRefresh}
                             className="text-xs text-blue-600 hover:text-blue-700 font-medium"
                         >
                             Try again
